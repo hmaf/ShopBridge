@@ -9,13 +9,18 @@ public class ProductTests
     [Fact]
     public void Create_Product_Should_Set_Properties()
     {
-        // Arrange 
-        var result = new Product("Laptop",350000000,3);
+        // Arrange
+        string name = "Laptop";
+        decimal price = 350000000;
+        int stock = 3;
+
+        // Act
+        var product = new Product(name, price, stock);
 
         // Assert
-        result.Id.Should().NotBeEmpty();
-        result.Name.Should().Be("Laptop");
-        result.Price.Should().Be(350000000);
-        result.Stock.Should().Be(3);
+        product.Id.Should().NotBeEmpty();
+        product.Name.Should().Be("Laptop");
+        product.Price.Should().Be(350000000);
+        product.Stock.Should().Be(3);
     }
 }
