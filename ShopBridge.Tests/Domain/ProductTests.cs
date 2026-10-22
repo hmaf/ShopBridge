@@ -10,13 +10,7 @@ public class ProductTests
     public void Create_Product_Should_Set_Properties()
     {
         // Arrange 
-        var product = new Product(
-            "Laptop",
-            350000000,
-            3);
-
-        // Act
-        var result = product;
+        var result = new Product("Laptop",350000000,3);
 
         // Assert
         result.Id.Should().NotBeEmpty();
