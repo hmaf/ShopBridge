@@ -12,4 +12,9 @@
     <PackageReference Include="MediatR" Version="14.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ShopBridge.Domain\ShopBridge.Domain.csproj" />
+    <ProjectReference Include="..\ShopBridge.Infra\ShopBridge.Infra.csproj" />
+  </ItemGroup>
+
 </Project>

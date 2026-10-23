@@ -1,0 +1,8 @@
+version: '3.4'
+
+services:
+  shopbridge.api:
+    image: ${DOCKER_REGISTRY-}shopbridgeapi
+    build:
+      context: .
+      dockerfile: ShopBridge.Api/Dockerfile
