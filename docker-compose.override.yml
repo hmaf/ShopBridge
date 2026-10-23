@@ -1,6 +1,22 @@
 version: '3.4'
 
 services:
+  shopbridge-db:
+    container_name: shopbridge-postgres
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__ShopBridgeDb=Host=shopbridge-db;Port=5432;Database=shopbridge_db;Username=shopbridge_user;Password=${SHOPBRIDGE_DB_PASSWORD}
+    restart: always
+    ports:
+      - "5433:5432"
+    volumes:
+      - shopbridge_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shopbridge_user -d shopbridge_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   shopbridge.api:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development

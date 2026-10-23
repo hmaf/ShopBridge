@@ -1,8 +1,15 @@
 version: '3.4'
 
 services:
+  shopbridge-db:
+    image: postgres:16
+
   shopbridge.api:
     image: ${DOCKER_REGISTRY-}shopbridgeapi
     build:
       context: .
       dockerfile: ShopBridge.Api/Dockerfile
+
+
+  volumes:
+    shopbridge_postgres_data:
