@@ -11,5 +11,5 @@ services:
       dockerfile: ShopBridge.Api/Dockerfile
 
 
-  volumes:
-    shopbridge_postgres_data:
+volumes:
+  shopbridge_postgres_data:
