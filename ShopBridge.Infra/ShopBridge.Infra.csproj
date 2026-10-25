@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ShopBridge.Application\ShopBridge.Application.csproj" />
     <ProjectReference Include="..\ShopBridge.Domain\ShopBridge.Domain.csproj" />
   </ItemGroup>
 

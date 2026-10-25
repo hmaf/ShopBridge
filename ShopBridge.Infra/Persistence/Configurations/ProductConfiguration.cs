@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using ShopBridge.Domain.Entities;
 
-namespace ShopBridge.Infra.Persistence.Configurationsک
+namespace ShopBridge.Infra.Persistence.Configurations
 {
     public class ProductConfiguration : IEntityTypeConfiguration<Product>
     {

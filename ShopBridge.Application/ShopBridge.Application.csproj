@@ -14,7 +14,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ShopBridge.Domain\ShopBridge.Domain.csproj" />
-    <ProjectReference Include="..\ShopBridge.Infra\ShopBridge.Infra.csproj" />
   </ItemGroup>
 
 </Project>

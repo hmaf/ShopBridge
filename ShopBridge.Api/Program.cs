@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
-using ShopBridge.Infra.Persistence;
+using ShopBridge.Application;
+using ShopBridge.Infra;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,10 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+builder.Services.AddInfraServices(builder.Configuration);
+builder.Services.AddApplicationServices();
 
 builder.Services.AddControllers();
 

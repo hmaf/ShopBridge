@@ -1,19 +1,18 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ShopBridge.Infra.Persistence;
+﻿using MediatR;
+using Microsoft.AspNetCore.Mvc;
+using ShopBridge.Application.Features.Products.Queries.GetProducts;
 
 namespace ShopBridge.Api.Controller;
 
 [ApiController]
 [Route("api/Product")]
-public class ProductController(AppDbContext db) : ControllerBase
+public class ProductController : BaseController
 {
+    public ProductController(ISender sender) : base(sender)
+    {
+    }
 
     [HttpGet("GetAll")]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
-    {
-        var products = await db.Products.AsNoTracking().ToListAsync();
-
-        return Ok(products);
-    }
+        => Ok(await _sender.Send(new GetProductsQuery(), cancellationToken));
 }
