@@ -2,9 +2,11 @@ name: .NET
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - master
   pull_request:
-    branches: [ "master" ]
+    branches:
+      - master
 
 jobs:
   build:
@@ -16,9 +18,9 @@ jobs:
         env:
           POSTGRES_DB: shopbridge_test_db
           POSTGRES_USER: shopbridge_user
-          POSTGRES_PASSWORD: @dmIn_2026_Maf
+          POSTGRES_PASSWORD: your_test_password
         ports:
-          - 5433:5432
+          - "5433:5432"
         options: >-
           --health-cmd "pg_isready -U shopbridge_user -d shopbridge_test_db"
           --health-interval 10s
@@ -26,18 +28,19 @@ jobs:
           --health-retries 5
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
 
-    - name: Restore dependencies
-      run: dotnet restore ShopBridge.sln
+      - name: Restore dependencies
+        run: dotnet restore ShopBridge.sln
 
-    - name: Build
-      run: dotnet build ShopBridge.sln --no-restore
+      - name: Build
+        run: dotnet build ShopBridge.sln --no-restore
 
-    - name: Test
-      run: dotnet test ShopBridge.sln --no-build --verbosity normal
+      - name: Test
+        run: dotnet test ShopBridge.sln --no-build --verbosity normal
