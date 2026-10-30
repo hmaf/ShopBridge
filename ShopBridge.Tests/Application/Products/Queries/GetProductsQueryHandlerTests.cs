@@ -8,7 +8,7 @@ using ShopBridge.Application.Features.Products.Queries.GetProducts;
 using ShopBridge.Domain.Entities;
 using FluentAssertions;
 
-namespace ShopBridge.Tests.Application.Products;
+namespace ShopBridge.Tests.Application.Products.Queries;
 
 public class GetProductsQueryHandlerTests
 {

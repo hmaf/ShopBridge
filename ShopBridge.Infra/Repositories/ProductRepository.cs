@@ -6,9 +6,12 @@ using System.Runtime.CompilerServices;
 
 namespace ShopBridge.Infra.Repositories;
 
-public class ProductRepository(AppDbContext db) : IProductRepository
+public class ProductRepository : GenericRepository<Product>, IProductRepository
 {
-    
+    public ProductRepository(AppDbContext context) : base(context)
+    {
+    }
+
     public async Task<IReadOnlyList<Product>> GetAll(CancellationToken cancellationToken = default)
-        => await db.Products.AsNoTracking().ToListAsync(cancellationToken);
+        => await _dbSet.AsNoTracking().ToListAsync(cancellationToken);
 }

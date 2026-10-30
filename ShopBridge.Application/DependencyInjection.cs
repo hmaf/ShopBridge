@@ -1,5 +1,6 @@
 ﻿
 using Microsoft.Extensions.DependencyInjection;
+using ShopBridge.Application.Common.Behaviors;
 
 namespace ShopBridge.Application;
 
@@ -9,8 +10,10 @@ public static class DependencyInjection
         this IServiceCollection services)
     {
         services.AddMediatR(configuration =>
-            configuration.RegisterServicesFromAssembly(
-                typeof(DependencyInjection).Assembly));
+        {
+            configuration.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly);
+            configuration.AddOpenBehavior(typeof(ValidationBehavior<,>));
+        });
 
         return services;
     }
