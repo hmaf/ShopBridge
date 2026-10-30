@@ -1,6 +1,3 @@
-# This workflow will build a .NET project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-
 name: .NET
 
 on:
@@ -11,18 +8,36 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: shopbridge_test_db
+          POSTGRES_USER: shopbridge_user
+          POSTGRES_PASSWORD: your_test_password
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U shopbridge_user -d shopbridge_test_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
+
     - name: Restore dependencies
       run: dotnet restore ShopBridge.sln
+
     - name: Build
       run: dotnet build ShopBridge.sln --no-restore
+
     - name: Test
       run: dotnet test ShopBridge.sln --no-build --verbosity normal
