@@ -16,7 +16,7 @@ jobs:
         env:
           POSTGRES_DB: shopbridge_test_db
           POSTGRES_USER: shopbridge_user
-          POSTGRES_PASSWORD: your_test_password
+          POSTGRES_PASSWORD: @dmIn_2026_Maf
         ports:
           - 5433:5432
         options: >-
