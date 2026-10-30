@@ -41,7 +41,14 @@ jobs:
 
       - name: Build
         run: dotnet build ShopBridge.sln --no-restore
-
+        
+      - name: Update Database
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5433;Database=shopbridge_test_db;Username=shopbridge_user;Password=${{ secrets.POSTGRES_PASSWORD }}"
+        run: |
+          dotnet tool install --global dotnet-ef
+          dotnet ef database update --project ShopBridge.Infra --startup-project ShopBridge.Api
+      
       - name: Test
         env:
           ConnectionStrings__DefaultConnection: "Host=localhost;Port=5433;Database=shopbridge_test_db;Username=shopbridge_user;Password=${{ secrets.POSTGRES_PASSWORD }}"
