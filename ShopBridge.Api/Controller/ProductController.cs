@@ -12,7 +12,7 @@ public class ProductController : BaseController
     {
     }
 
-    [HttpGet("GetAll")]
+    [HttpGet]
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         => Ok(await _sender.Send(new GetProductsQuery(), cancellationToken));
 }
