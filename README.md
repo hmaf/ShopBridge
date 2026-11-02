@@ -1,6 +1,8 @@
 # ShopBridge
 
-E-commerce order management system built with .NET 8 and Clean Architecture.
+**ShopBridge** is an e-commerce order management system built with .NET 8, following Clean Architecture principles.
+
+The project focuses on maintainable architecture, separation of concerns, testability, and reliable backend development practices.
 
 ## Tech Stack
 
@@ -16,13 +18,17 @@ E-commerce order management system built with .NET 8 and Clean Architecture.
 
 ## Architecture
 
-The solution follows Clean Architecture principles:
+ShopBridge follows Clean Architecture principles, separating business logic, application logic, infrastructure, and presentation concerns.
 
-- **ShopBridge.Domain** – Business entities and domain rules.
-- **ShopBridge.Application** – Application logic, CQRS handlers, and abstractions.
-- **ShopBridge.Infra** – Persistence and infrastructure implementations.
-- **ShopBridge.Api** – REST API endpoints and dependency injection.
-- **ShopBridge.Tests** – Unit and integration tests.
+The solution consists of the following projects:
+
+| Project | Responsibility |
+|---|---|
+| `ShopBridge.Domain` | Core business entities and domain rules |
+| `ShopBridge.Application` | Application use cases, CQRS handlers, and abstractions |
+| `ShopBridge.Infra` | Database access and infrastructure implementations |
+| `ShopBridge.Api` | REST API endpoints and application entry point |
+| `ShopBridge.Tests` | Unit and integration tests |
 
 ## Features
 
@@ -31,11 +37,22 @@ The solution follows Clean Architecture principles:
 - Generic Repository Pattern
 - Unit of Work Pattern
 - Input validation using FluentValidation
-- PostgreSQL integration with EF Core
-- Dockerized API and database
+- PostgreSQL integration with Entity Framework Core
+- Dependency Injection
+- Dockerized API and PostgreSQL database
 - Unit and integration testing
 
-## 🐳 Running with Docker
+## Testing
+
+Run all tests from the solution root:
+
+```bash
+dotnet test ShopBridge.sln
+```
+
+The test project includes tests for application handlers, validators, domain logic, and API integration.
+
+## Running with Docker
 
 ShopBridge uses Docker Compose to run the ASP.NET Core API and PostgreSQL database together.
 
@@ -46,21 +63,21 @@ ShopBridge uses Docker Compose to run the ASP.NET Core API and PostgreSQL databa
 
 ### Configuration
 
-Create a `.env` file in the solution root (next to `docker-compose.yml`):
+Create a `.env` file in the solution root, next to `docker-compose.yml`:
 
 ```env
 SHOPBRIDGE_DB_PASSWORD=your_secure_password
 ```
 
-**Important:** Never commit your `.env` file or database credentials to Git.
-
-Add `.env` to `.gitignore`:
+Add `.env` to `.gitignore` to prevent committing database credentials:
 
 ```gitignore
 .env
 ```
 
-### Start the application
+**Important:** Never commit database credentials or environment-specific secrets to Git.
+
+### Start the Application
 
 Run the following command from the solution root:
 
@@ -70,13 +87,15 @@ docker compose up -d --build
 
 This command builds the API image and starts the API and PostgreSQL containers.
 
-### Verify containers
+### Verify Containers
+
+Check the running containers:
 
 ```bash
 docker compose ps
 ```
 
-Check the container logs:
+Check application logs:
 
 ```bash
 docker compose logs -f
@@ -87,35 +106,57 @@ docker compose logs -f
 Once the containers are running:
 
 - **Swagger UI:** http://localhost:8080/swagger
-- **API:** http://localhost:8080
+- **API Base URL:** http://localhost:8080
 
-### Stop the application
+### Stop the Application
+
+Stop and remove the containers:
 
 ```bash
 docker compose down
 ```
 
-To remove containers and the PostgreSQL volume (this permanently deletes the database data):
+To remove containers and the PostgreSQL volume:
 
 ```bash
 docker compose down -v
 ```
 
-### Services
+**Warning:** The `-v` option permanently deletes the PostgreSQL data stored in the Docker volume.
 
-| Service | Description | Port |
-|---|---|---|
-| `shopbridge.api` | ASP.NET Core Web API | 8080 |
-| `shopbridge-db` | PostgreSQL 16 | 5433 (host) |
+## Docker Services
 
-PostgreSQL is accessible from the API container through the internal Docker network using the hostname `shopbridge-db` and port `5432`.
+| Service | Description | Host Port | Container Port |
+|---|---|---:|---:|
+| `shopbridge.api` | ASP.NET Core Web API | 8080 | 8080 |
+| `shopbridge-db` | PostgreSQL 16 | 5433 | 5432 |
 
-### Architecture
+The API connects to PostgreSQL through the internal Docker network using:
 
-ShopBridge follows Clean Architecture principles and separates responsibilities into:
+- **Host:** `shopbridge-db`
+- **Port:** `5432`
+- **Database:** `shopbridge_db`
 
-- **ShopBridge.Domain** – Core business entities and rules.
-- **ShopBridge.Application** – Use cases, CQRS handlers, and application abstractions.
-- **ShopBridge.Infra** – Database access and infrastructure implementations.
-- **ShopBridge.Api** – HTTP endpoints and application entry point.
-- **ShopBridge.Tests** – Unit and integration tests.
+## Development
+
+To build the solution:
+
+```bash
+dotnet build ShopBridge.sln
+```
+
+To run the API directly on your machine:
+
+```bash
+dotnet run --project ShopBridge.Api
+```
+
+To apply Entity Framework Core migrations:
+
+```bash
+dotnet ef database update --project ShopBridge.Infra --startup-project ShopBridge.Api
+```
+
+## Project Status
+
+ShopBridge is an evolving backend portfolio project. New features and infrastructure components will be introduced incrementally as development progresses.
