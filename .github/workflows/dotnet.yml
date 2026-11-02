@@ -1,0 +1,55 @@
+name: .NET
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: shopbridge_test_db
+          POSTGRES_USER: shopbridge_user
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        ports:
+          - "5433:5432"
+        options: >-
+          --health-cmd "pg_isready -U shopbridge_user -d shopbridge_test_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore ShopBridge.sln
+
+      - name: Build
+        run: dotnet build ShopBridge.sln --no-restore
+        
+      - name: Update Database
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5433;Database=shopbridge_test_db;Username=shopbridge_user;Password=${{ secrets.POSTGRES_PASSWORD }}"
+        run: |
+          dotnet tool install --global dotnet-ef
+          dotnet ef database update --project ShopBridge.Infra --startup-project ShopBridge.Api
+      
+      - name: Test
+        env:
+          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5433;Database=shopbridge_test_db;Username=shopbridge_user;Password=${{ secrets.POSTGRES_PASSWORD }}"
+        run: dotnet test ShopBridge.sln --no-build --verbosity normal
