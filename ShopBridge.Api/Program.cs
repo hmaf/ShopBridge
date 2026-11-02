@@ -1,3 +1,4 @@
+using ShopBridge.Api.Middleware;
 using ShopBridge.Application;
 using ShopBridge.Infra;
 
@@ -14,6 +15,8 @@ builder.Services.AddApplicationServices();
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

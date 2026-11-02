@@ -23,7 +23,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
-      - ConnectionStrings__ShopBridgeDb=Host=shopbridge-db;Port=5432;Database=shopbridge_db;Username=shopbridge_user;Password=${SHOPBRIDGE_DB_PASSWORD}
+      - ConnectionStrings__DefaultConnection=Host=shopbridge-db;Port=5432;Database=shopbridge_db;Username=shopbridge_user;Password=${SHOPBRIDGE_DB_PASSWORD}
     ports:
       - "8080:8080"
     depends_on:
