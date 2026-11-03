@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using ShopBridge.Application.Common.Mapping;
 
 namespace ShopBridge.Api.Middleware;
 
@@ -36,30 +37,22 @@ public class GlobalExceptionMiddleware
         HttpContext httpContext,
         Exception ex)
     {
-        var (statusCode, title) = ex switch
+        var (statusCode, message) = ex switch
         {
             ValidationException =>
-                (StatusCodes.Status400BadRequest, "Validation Error"),
+                (StatusCodes.Status400BadRequest, ex.Message),
 
             KeyNotFoundException =>
-                (StatusCodes.Status404NotFound, "Resource Not Found"),
+                (StatusCodes.Status404NotFound, ex.Message),
 
-            _ => (StatusCodes.Status500InternalServerError, "Internal Server Error")
+            _ => (StatusCodes.Status500InternalServerError, "An unexpected error occurred.")
         };
 
         httpContext.Response.StatusCode = statusCode;
-        httpContext.Response.ContentType = "application/problem+json";
+        httpContext.Response.ContentType = "application/json";
 
-        var problemDetails = new ProblemDetails
-        {
-            Status = statusCode,
-            Title = title,
-            Detail = statusCode == 500
-                ? "An unexpected error occurred."
-                : ex.Message,
-            Instance = httpContext.Request.Path
-        };
+        var response = ApiResponse<object>.FailureResponse(message);
 
-        await httpContext.Response.WriteAsJsonAsync(problemDetails);
+        await httpContext.Response.WriteAsJsonAsync(response);
     }
 }

@@ -36,8 +36,8 @@ public class GetProductsQueryHandlerTests
             CancellationToken.None);
 
         // Assert
-        result.Should().HaveCount(2);
-        result.Should().BeEquivalentTo(products);
+        result.Data.Should().HaveCount(2);
+        result.Data.Should().BeEquivalentTo(products);
 
         repositoryMock.Verify(
             o => o.GetAll(It.IsAny<CancellationToken>()),
@@ -60,7 +60,7 @@ public class GetProductsQueryHandlerTests
         var result = await handler.Handle(new GetProductsQuery(), CancellationToken.None);
 
         // Assert
-        Assert.Empty(result);
+        Assert.Empty(result.Data);
     }
 
     [Fact]

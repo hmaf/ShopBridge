@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using ShopBridge.Application.Common.Mapping;
+using ShopBridge.Application.Features.Products.DTOs;
 using System.Net.Http.Json;
 using Xunit;
 
@@ -44,14 +46,8 @@ public class ProductApiTests
             response.Content.Headers.ContentType?.MediaType);
 
         var products = await response.Content
-            .ReadFromJsonAsync<List<ProductResponse>>();
+            .ReadFromJsonAsync<ApiResponse<List<ProductDto>>>();
 
         Assert.NotNull(products);
     }
-
-    private sealed record ProductResponse(
-    Guid Id,
-    string Name,
-    decimal Price,
-    int Stock);
 }

@@ -2,11 +2,12 @@
 using MediatR;
 using ShopBridge.Application.Abstractions.Persistence;
 using ShopBridge.Application.Abstractions.Repositories;
+using ShopBridge.Application.Common.Mapping;
 using ShopBridge.Domain.Entities;
 
 namespace ShopBridge.Application.Features.Products.Commands.CreateProduct;
 
-public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, Guid>
+public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, ApiResponse<Guid>>
 {
     private readonly IGenericRepository<Product> _repository;
     private readonly IUnitOfWork _unitOfWork;
@@ -17,7 +18,7 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<Guid> Handle(CreateProductCommand request, CancellationToken cancellationToken)
+    public async Task<ApiResponse<Guid>> Handle(CreateProductCommand request, CancellationToken cancellationToken)
     {
         var product = new Product(request.Name,
             request.Price,
@@ -27,6 +28,6 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return product.Id;
+        return ApiResponse<Guid>.SuccessResponse(product.Id);
     }
 }

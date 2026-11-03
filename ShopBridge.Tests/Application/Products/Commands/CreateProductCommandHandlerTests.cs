@@ -31,7 +31,7 @@ public class CreateProductCommandHandlerTests
             CancellationToken.None);
 
         // Assert
-        result.Should().NotBeEmpty();
+        result.Data.Should().NotBeEmpty();
 
         repository.Verify(o =>
             o.Add(
