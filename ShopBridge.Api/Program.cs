@@ -1,4 +1,5 @@
 using Serilog;
+using ShopBridge.Api.ExceptionHandling;
 using ShopBridge.Api.Middleware;
 using ShopBridge.Application;
 using ShopBridge.Infra;
@@ -25,6 +26,8 @@ builder.Services.AddInfraServices(builder.Configuration);
 builder.Services.AddApplicationServices();
 
 builder.Services.AddControllers();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var app = builder.Build();
 
@@ -36,6 +39,14 @@ using (var scope = app.Services.CreateScope())
     await initializer.Initialize();
 }
 
+app.Use((context, next) =>
+{
+    context.Request.EnableBuffering();
+    return next(context);
+});
+
+app.UseExceptionHandler();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -44,15 +55,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseRouting();
-
 app.UseHttpsRedirection();
-
 app.UseMiddleware<LogMetadataMiddleware>(); 
-
 app.UseMiddleware<RequestLoggingMiddleware>(); 
-
 app.MapControllers();
-
 app.Run();
 
 public partial class Program

@@ -1,265 +1,88 @@
-﻿
-using FluentValidation;
+﻿using System.Diagnostics;
 using ShopBridge.Application.Abstractions.Logging;
-using ShopBridge.Application.Common.Mapping;
-using ShopBridge.Domain.Exceptions;
-using System.Diagnostics;
-using System.Runtime.ExceptionServices;
 
 namespace ShopBridge.Api.Middleware;
 
-public class RequestLoggingMiddleware
+public class RequestLoggingMiddleware(
+    RequestDelegate next,
+    ILogger<RequestLoggingMiddleware> logger)
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger<RequestLoggingMiddleware> _logger;
-
-    public RequestLoggingMiddleware(
-        RequestDelegate next,
-        ILogger<RequestLoggingMiddleware> logger)
-    {
-        _next = next;
-        _logger = logger;
-    }
-
     public async Task InvokeAsync(
         HttpContext context,
         ILogService logService)
     {
         var stopwatch = Stopwatch.StartNew();
-        var originalResponseBody = context.Response.Body;
+        var originalBody = context.Response.Body;
 
-        await using var responseBuffer = new MemoryStream();
-
-        Exception? exception = null;
-        var shouldRethrow = false;
-
-        context.Request.EnableBuffering();
-        context.Response.Body = responseBuffer;
+        await using var buffer = new MemoryStream();
+        context.Response.Body = buffer;
 
         try
         {
-            try
-            {
-                await _next(context);
-            }
-            catch (Exception ex)
-            {
-                exception = ex;
-            }
-
+            await next(context);
             stopwatch.Stop();
 
-            if (exception is null)
+            if (context.Response.StatusCode < 400)
             {
-                if (context.Response.StatusCode < 400)
-                {
-                    var request = new
-                    {
-                        Method = context.Request.Method,
-                        Path = context.Request.Path.Value,
-                        QueryString = context.Request.QueryString.Value
-                    };
-
-                    var responseBody =
-                        await ReadJsonResponseBodyAsync(
-                            context.Response,
-                            responseBuffer,
-                            context.RequestAborted);
-
-                    var response = new
-                    {
-                        StatusCode = context.Response.StatusCode,
-                        Body = responseBody
-                    };
-
-                    try
-                    {
-                        await logService.LogApplicationAsync(
-                            request,
-                            response,
-                            stopwatch.Elapsed,
-                            context.RequestAborted);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(
-                            ex,
-                            "Failed to persist application log.");
-                    }
-                }
-            }
-            else
-            {
-                var requestBody = await ReadRequestBodyAsync(
-                    context.Request,
-                    context.RequestAborted);
-
-                var errorRequest = new
-                {
-                    Method = context.Request.Method,
-                    Path = context.Request.Path.Value,
-                    QueryString = context.Request.QueryString.Value,
-                    Body = requestBody
-                };
-
-                var (statusCode, message) = exception switch
-                {
-                    BusinessException =>
-                        (StatusCodes.Status400BadRequest, exception.Message),
-
-                    ValidationException =>
-                        (StatusCodes.Status400BadRequest, exception.Message),
-
-                    KeyNotFoundException =>
-                        (StatusCodes.Status404NotFound, exception.Message),
-
-                    _ => (
-                        StatusCodes.Status500InternalServerError,
-                        "An unexpected error occurred.")
-                };
-
-                try
-                {
-                    switch (exception)
-                    {
-                        case BusinessException businessException:
-                            _logger.LogWarning(
-                                exception,
-                                "A business error occurred. ErrorCode: {ErrorCode}",
-                                businessException.ErrorCode);
-
-                            await logService.LogBusinessErrorAsync(
-                                errorRequest,
-                                businessException.ErrorCode,
-                                businessException.Message,
-                                context.RequestAborted);
-                            break;
-
-                        case ValidationException validationException:
-                            _logger.LogWarning(
-                                exception,
-                                "Request validation failed.");
-
-                            await logService.LogBusinessErrorAsync(
-                                errorRequest,
-                                400,
-                                validationException.Message,
-                                context.RequestAborted);
-                            break;
-
-                        case KeyNotFoundException:
-                            _logger.LogWarning(
-                                exception,
-                                "Requested resource was not found.");
-
-                            await logService.LogBusinessErrorAsync(
-                                errorRequest,
-                                404,
-                                exception.Message,
-                                context.RequestAborted);
-                            break;
-
-                        default:
-                            _logger.LogError(
-                                exception,
-                                "An unhandled system exception occurred.");
-
-                            await logService.LogSystemErrorAsync(
-                                errorRequest,
-                                exception.Message,
-                                exception.StackTrace ?? string.Empty,
-                                context.RequestAborted);
-                            break;
-                    }
-                }
-                catch (Exception loggingException)
-                {
-                    _logger.LogError(
-                        loggingException,
-                        "Failed to persist exception log.");
-                }
-
-                if (context.Response.HasStarted)
-                {
-                    _logger.LogWarning(
-                        "The response has already started. Exception response cannot be written.");
-
-                    shouldRethrow = true;
-                }
-                else
-                {
-                    responseBuffer.SetLength(0);
-
-                    context.Response.StatusCode = statusCode;
-                    context.Response.ContentType = "application/json";
-
-                    var apiResponse =
-                        ApiResponse<object>.FailureResponse(message);
-
-                    await context.Response.WriteAsJsonAsync(apiResponse);
-                }
+                await TryLogAsync(context, logService, buffer, stopwatch.Elapsed);
             }
 
-            // Copy the buffered response to the original response stream.
-            responseBuffer.Position = 0;
-
-            await responseBuffer.CopyToAsync(
-                originalResponseBody,
-                context.RequestAborted);
-
-            if (shouldRethrow && exception is not null)
-            {
-                ExceptionDispatchInfo.Capture(exception).Throw();
-            }
+            buffer.Position = 0;
+            await buffer.CopyToAsync(originalBody, context.RequestAborted);
         }
         finally
         {
-            context.Response.Body = originalResponseBody;
+            context.Response.Body = originalBody;
         }
     }
 
-    private static async Task<string?> ReadJsonResponseBodyAsync(
+    private async Task TryLogAsync(
+        HttpContext context,
+        ILogService logService,
+        MemoryStream buffer,
+        TimeSpan elapsed)
+    {
+        try
+        {
+            var request = new
+            {
+                Method = context.Request.Method,
+                Path = context.Request.Path.Value,
+                QueryString = context.Request.QueryString.Value
+            };
+
+            var response = new
+            {
+                StatusCode = context.Response.StatusCode,
+                Body = await ReadJsonBodyAsync(
+                    context.Response, buffer, context.RequestAborted)
+            };
+
+            await logService.LogApplicationAsync(
+                request, response, elapsed, context.RequestAborted);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to persist application log.");
+        }
+    }
+
+    private static async Task<string?> ReadJsonBodyAsync(
         HttpResponse response,
-        MemoryStream responseBuffer,
+        MemoryStream buffer,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(response.ContentType) ||
             !response.ContentType.Contains(
-                "json",
-                StringComparison.OrdinalIgnoreCase))
+                "json", StringComparison.OrdinalIgnoreCase))
         {
             return null;
         }
 
-        responseBuffer.Position = 0;
-
-        using var reader = new StreamReader(
-            responseBuffer,
-            leaveOpen: true);
-
+        buffer.Position = 0;
+        using var reader = new StreamReader(buffer, leaveOpen: true);
         var body = await reader.ReadToEndAsync(cancellationToken);
-
-        responseBuffer.Position = 0;
-
-        return body;
-    }
-
-    private static async Task<string> ReadRequestBodyAsync(
-        HttpRequest request,
-        CancellationToken cancellationToken)
-    {
-        if (!request.Body.CanSeek)
-            return string.Empty;
-
-        request.Body.Position = 0;
-
-        using var reader = new StreamReader(
-            request.Body,
-            leaveOpen: true);
-
-        var body = await reader.ReadToEndAsync(cancellationToken);
-
-        request.Body.Position = 0;
+        buffer.Position = 0;
 
         return body;
     }
