@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using ShopBridge.Application.Abstractions.Logging;
 
 namespace ShopBridge.Api.Controller;
 

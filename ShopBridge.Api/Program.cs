@@ -1,8 +1,20 @@
+using Serilog;
 using ShopBridge.Api.Middleware;
 using ShopBridge.Application;
 using ShopBridge.Infra;
+using ShopBridge.Infra.Logging.Configuration;
+using ShopBridge.Infra.Logging.Metadata;
 
 var builder = WebApplication.CreateBuilder(args);
+
+Serilog.Debugging.SelfLog.Enable(Console.Error);
+
+builder.Host.UseSerilog((context, configuration) =>
+{
+    SerilogConfiguration.Configure(
+        configuration,
+        context.Configuration);
+});
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -16,7 +28,13 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-app.UseMiddleware<GlobalExceptionMiddleware>();
+using (var scope = app.Services.CreateScope())
+{
+    var initializer = scope.ServiceProvider
+        .GetRequiredService<LogMetadataInitializer>();
+
+    await initializer.Initialize();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -25,7 +43,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseRouting();
+
 app.UseHttpsRedirection();
+
+app.UseMiddleware<LogMetadataMiddleware>(); 
+
+app.UseMiddleware<RequestLoggingMiddleware>(); 
 
 app.MapControllers();
 

@@ -6,6 +6,7 @@ using ShopBridge.Application.Abstractions.Repositories;
 using ShopBridge.Application.Common.Mapping;
 using ShopBridge.Application.Features.Products.DTOs;
 using ShopBridge.Domain.Entities;
+using ShopBridge.Domain.Exceptions;
 
 namespace ShopBridge.Application.Features.Products.Queries.GetProductById;
 
@@ -23,7 +24,9 @@ public class GetProductByIdQueryHandler
     {
         var product = await _repository.GetById(request.id, cancellationToken);
 
-        if (product == null) return ApiResponse<ProductDto?>.FailureResponse("Product not found.");
+        if (product == null) 
+            BusinessException.Throw(611071709, "test business error");
+
 
         var result = product.Adapt<ProductDto>();
 

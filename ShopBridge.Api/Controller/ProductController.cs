@@ -1,10 +1,12 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using ShopBridge.Application.Abstractions.Logging;
 using ShopBridge.Application.Common.Mapping;
 using ShopBridge.Application.Features.Products.Commands.CreateProduct;
 using ShopBridge.Application.Features.Products.DTOs;
 using ShopBridge.Application.Features.Products.Queries.GetProductById;
 using ShopBridge.Application.Features.Products.Queries.GetProducts;
+using System.Diagnostics;
 
 namespace ShopBridge.Api.Controller;
 
@@ -20,7 +22,7 @@ public class ProductController : BaseController
     public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         => Ok(await _sender.Send(new GetProductsQuery(), cancellationToken));
 
-    [HttpGet("id:guid")]
+    [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {
         var result = await _sender.Send(
@@ -40,5 +42,5 @@ public class ProductController : BaseController
 
         return CreatedAtAction(nameof(GetById), new { id = productId });
     }
-        
+
 }
