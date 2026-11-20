@@ -29,9 +29,7 @@ public class ProductController : BaseController
             new GetProductByIdQuery(id),
             cancellationToken);
 
-        return result.Data is null
-            ? NotFound(result) 
-            : Ok(result);
+        return Ok(result);
     }
 
     [HttpPost]

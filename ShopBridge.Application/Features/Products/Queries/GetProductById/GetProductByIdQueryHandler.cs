@@ -25,8 +25,10 @@ public class GetProductByIdQueryHandler
         var product = await _repository.GetById(request.id, cancellationToken);
 
         if (product == null) 
-            BusinessException.Throw(611071709, "test business error");
-
+            BusinessException.Throw(
+                611071709, 
+                $"Product with ID '{request.id}' was not found.",
+                BusinessErrorType.NotFound);
 
         var result = product.Adapt<ProductDto>();
 

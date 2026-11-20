@@ -53,8 +53,21 @@ public sealed class GlobalExceptionHandler(
     private static (int StatusCode, string Message) Map(Exception exception) =>
         exception switch
         {
-            BusinessException => (
-                StatusCodes.Status400BadRequest, exception.Message),
+            BusinessException businessException => (
+                businessException.ErrorType switch 
+                {
+                    BusinessErrorType.NotFound =>
+                        StatusCodes.Status404NotFound,
+
+                    BusinessErrorType.Conflict =>
+                        StatusCodes.Status409Conflict,
+
+                    BusinessErrorType.Validation => 
+                        StatusCodes.Status400BadRequest,
+
+                    _ => StatusCodes.Status400BadRequest
+                },
+                businessException.Message),
 
             ValidationException => (
                 StatusCodes.Status400BadRequest, exception.Message),
