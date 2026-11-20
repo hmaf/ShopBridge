@@ -28,7 +28,7 @@ public class GetProductByIdQueryHandlerTests
         // Act 
         var result = await handler.Handle(
             new GetProductByIdQuery(product.Id),
-            It.IsAny<CancellationToken>());
+            CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -65,5 +65,41 @@ public class GetProductByIdQueryHandlerTests
         // Assert 
         await act.Should()
             .ThrowAsync<BusinessException>();
+    }
+
+    [Fact]
+    public async Task Handle_Should_Throw_NotFound_BusinessException_When_Product_Does_Not_Exist()
+    {
+        // Arrange
+        var productId = Guid.NewGuid();
+
+        var repositoryMock = new Mock<IGenericRepository<Product>>();
+
+        repositoryMock
+            .Setup(o => o.GetById(
+                productId,
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Product?)null);
+
+        var handler = new GetProductByIdQueryHandler(repositoryMock.Object);
+
+        // Act
+        Func<Task> act = async () => await handler.Handle(
+            new GetProductByIdQuery(productId),
+            CancellationToken.None);
+
+        // Assert
+        var exception = await act.Should()
+            .ThrowAsync<BusinessException>();
+
+        exception.Which.ErrorCode.Should().Be(611071709);
+        exception.Which.ErrorType.Should().Be(BusinessErrorType.NotFound);
+
+        exception.Which.Message.Should()
+            .Be($"Product with ID '{productId}' was not found.");
+
+        repositoryMock.Verify(
+            o => o.GetById(productId, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 }
