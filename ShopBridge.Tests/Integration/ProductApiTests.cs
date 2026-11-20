@@ -2,52 +2,42 @@
 using Microsoft.Extensions.Configuration;
 using ShopBridge.Application.Common.Mapping;
 using ShopBridge.Application.Features.Products.DTOs;
+using ShopBridge.Tests.Integration.Infrastructure;
 using System.Net.Http.Json;
 using Xunit;
 
 namespace ShopBridge.Tests.Integration;
 
 public class ProductApiTests
-    : IClassFixture<WebApplicationFactory<global::Program>>
+    : IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<global::Program> _factory;
+    private readonly HttpClient _client;
 
-    public ProductApiTests(WebApplicationFactory<Program> factory)
+    public ProductApiTests(CustomWebApplicationFactory factory)
     {
-        _factory = factory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureAppConfiguration((context, config) =>
-            {
-                var testSettingsPath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
-
-                config.AddJsonFile(testSettingsPath, optional: false, reloadOnChange: false);
-            });
-        });
+        _client = factory.CreateClient();
     }
 
     [Fact]
-    public async Task GetProducts_Should_Return_ExpectedProduct()
+    public async Task GetProducts_Should_Return_SuccessfulResponse()
     {
-        // Arrange
-        var client = _factory.CreateClient();
-
         // Act
-        var response = await client.GetAsync("/api/Product");
-        var responseBody = await response.Content.ReadAsStringAsync();
+        var response = await _client.GetAsync("/api/Product");
 
-        // Assert: HTTP status
+        // Assert
         Assert.Equal(
             System.Net.HttpStatusCode.OK,
             response.StatusCode);
 
-        // Assert: JSON response
         Assert.Equal(
             "application/json",
             response.Content.Headers.ContentType?.MediaType);
 
-        var products = await response.Content
+        var result = await response.Content
             .ReadFromJsonAsync<ApiResponse<List<ProductDto>>>();
 
-        Assert.NotNull(products);
+        Assert.NotNull(result);
+        Assert.True(result.Success);
+        Assert.NotNull(result.Data);
     }
 }
