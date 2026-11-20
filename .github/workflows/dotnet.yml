@@ -1,3 +1,4 @@
+
 name: .NET
 
 on:
@@ -27,12 +28,16 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+    env:
+      ConnectionStrings__DefaultConnection: "Host=localhost;Port=5433;Database=shopbridge_test_db;Username=shopbridge_user;Password=${{ secrets.POSTGRES_PASSWORD }}"
+      ConnectionStrings__LogsConnection: "Host=localhost;Port=5433;Database=shopbridge_test_logs_db;Username=shopbridge_user;Password=${{ secrets.POSTGRES_PASSWORD }}"
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v5
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.0.x
 
@@ -41,15 +46,23 @@ jobs:
 
       - name: Build
         run: dotnet build ShopBridge.sln --no-restore
-        
-      - name: Update Database
+
+      - name: Install EF Core Tool
+        run: dotnet tool install --global dotnet-ef --version 8.0.32
+
+      - name: Create Logging Database
         env:
-          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5433;Database=shopbridge_test_db;Username=shopbridge_user;Password=${{ secrets.POSTGRES_PASSWORD }}"
+          PGPASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
         run: |
-          dotnet tool install --global dotnet-ef
-          dotnet ef database update --project ShopBridge.Infra --startup-project ShopBridge.Api
-      
+          psql -h localhost -p 5433 -U shopbridge_user \
+            -d shopbridge_test_db \
+            -c "CREATE DATABASE shopbridge_test_logs_db;"
+
+      - name: Update Database
+        run: |
+          dotnet ef database update \
+            --project ShopBridge.Infra/ShopBridge.Infra.csproj \
+            --startup-project ShopBridge.Api/ShopBridge.Api.csproj
+
       - name: Test
-        env:
-          ConnectionStrings__DefaultConnection: "Host=localhost;Port=5433;Database=shopbridge_test_db;Username=shopbridge_user;Password=${{ secrets.POSTGRES_PASSWORD }}"
         run: dotnet test ShopBridge.sln --no-build --verbosity normal
