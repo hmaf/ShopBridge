@@ -4,6 +4,7 @@ using Moq;
 using ShopBridge.Application.Abstractions.Repositories;
 using ShopBridge.Application.Features.Products.Queries.GetProductById;
 using ShopBridge.Domain.Entities;
+using ShopBridge.Domain.Exceptions;
 
 namespace ShopBridge.Tests.Application.Products.Queries;
 
@@ -57,11 +58,12 @@ public class GetProductByIdQueryHandlerTests
         var handler = new GetProductByIdQueryHandler(repositoryMock.Object);
 
         // Act
-        var result = await handler.Handle(
-            new GetProductByIdQuery(productId), 
-            It.IsAny<CancellationToken>());
+        Func<Task> act = async () => await handler.Handle(
+            new GetProductByIdQuery(productId),
+            CancellationToken.None);
 
         // Assert 
-        result.Data.Should().BeNull();
+        await act.Should()
+            .ThrowAsync<BusinessException>();
     }
 }

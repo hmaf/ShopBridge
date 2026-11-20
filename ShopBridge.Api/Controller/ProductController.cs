@@ -38,9 +38,12 @@ public class ProductController : BaseController
     public async Task<IActionResult> Create(CreateProductCommand command, 
         CancellationToken cancellationToken)
     {
-        var productId = await _sender.Send(command, cancellationToken);
+        var result = await _sender.Send(command, cancellationToken);
 
-        return CreatedAtAction(nameof(GetById), new { id = productId });
+        return CreatedAtAction(
+            nameof(GetById), 
+            new { id = result.Data },
+            result);
     }
 
 }
