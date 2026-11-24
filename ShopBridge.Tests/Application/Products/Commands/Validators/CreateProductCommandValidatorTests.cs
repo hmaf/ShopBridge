@@ -4,7 +4,7 @@ using FluentValidation.TestHelper;
 using ShopBridge.Application.Features.Products.Commands.CreateProduct;
 using ShopBridge.Application.Features.Products.Commands.Validators;
 
-namespace ShopBridge.Tests.Application.Products.Commands;
+namespace ShopBridge.Tests.Application.Products.Commands.Validators;
 
 public class CreateProductCommandValidatorTests
 {

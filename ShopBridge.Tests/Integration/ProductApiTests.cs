@@ -1,6 +1,7 @@
 ﻿
 using System.Net;
 using System.Net.Http.Json;
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ShopBridge.Application.Common.Mapping;
@@ -184,5 +185,109 @@ public class ProductApiTests
         Assert.Equal(
             HttpStatusCode.BadRequest,
             response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateProduct_Should_Update_Product_And_Return_Success()
+    {
+        // Arrange
+        var product = new Product("Old Laptop", 1000, 5);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider
+                .GetRequiredService<AppDbContext>();
+
+            dbContext.Products.Add(product);
+            await dbContext.SaveChangesAsync();
+        }
+
+        try
+        {
+            var request = new
+            {
+                name = "New Laptop",
+                price = 1500,
+                stock = 10
+            };
+
+            // Act
+            var response = await _client.PutAsJsonAsync(
+                $"/api/Product/{product.Id}",
+                request);
+
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            using var scope = _factory.Services.CreateScope();
+
+            var dbContext = scope.ServiceProvider
+                .GetRequiredService<AppDbContext>();
+
+            var updatedProduct = await dbContext.Products
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == product.Id);
+
+            updatedProduct.Should().NotBeNull();
+            updatedProduct!.Name.Should().Be("New Laptop");
+            updatedProduct.Price.Should().Be(1500);
+            updatedProduct.Stock.Should().Be(10);
+        }
+        finally
+        {
+            using var scope = _factory.Services.CreateScope();
+
+            var dbContext = scope.ServiceProvider
+                .GetRequiredService<AppDbContext>();
+
+            await dbContext.Products
+                .Where(x => x.Id == product.Id)
+                .ExecuteDeleteAsync();
+        }
+    }
+
+    [Theory]
+    [InlineData("", 1500, 10)]
+    [InlineData("Valid Laptop", 0, 10)]
+    [InlineData("Valid Laptop", 1500, -1)]
+    public async Task UpdateProduct_Should_Return_BadRequest_For_Invalid_Input(
+    string name,
+    decimal price,
+    int stock)
+    {
+        // Arrange
+        var product = new Product("Old Laptop", 1000, 5);
+
+        using var scope = _factory.Services.CreateScope();
+
+        var dbContext = scope.ServiceProvider
+            .GetRequiredService<AppDbContext>();
+
+        await dbContext.Products.AddAsync(product);
+        await dbContext.SaveChangesAsync();
+
+        try
+        {
+            var request = new
+            {
+                name,
+                price,
+                stock
+            };
+
+            // Act
+            var response = await _client.PutAsJsonAsync(
+                $"/api/Product/{product.Id}",
+                request);
+
+            // Assert
+            response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        }
+        finally
+        {
+            await dbContext.Products
+                .Where(x => x.Id == product.Id)
+                .ExecuteDeleteAsync();
+        }
     }
 }

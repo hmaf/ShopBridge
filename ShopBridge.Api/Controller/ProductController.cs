@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ShopBridge.Application.Abstractions.Logging;
 using ShopBridge.Application.Common.Mapping;
 using ShopBridge.Application.Features.Products.Commands.CreateProduct;
+using ShopBridge.Application.Features.Products.Commands.UpdateProduct;
 using ShopBridge.Application.Features.Products.DTOs;
 using ShopBridge.Application.Features.Products.Queries.GetProductById;
 using ShopBridge.Application.Features.Products.Queries.GetProducts;
@@ -44,4 +45,16 @@ public class ProductController : BaseController
             result);
     }
 
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update(
+    Guid id,
+    [FromBody] UpdateProductCommand command,
+    CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(
+            command with { id = id },
+            cancellationToken);
+
+        return Ok(result);
+    }
 }
