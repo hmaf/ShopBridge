@@ -112,6 +112,11 @@ public class ProductApiTests
                 "/api/Product",
                 command);
 
+            var responseBody = await response.Content.ReadAsStringAsync();
+            Assert.True(
+    response.StatusCode == HttpStatusCode.Created,
+    $"Status: {response.StatusCode}\nResponse Body: {responseBody}");
+
             // Assert
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
 

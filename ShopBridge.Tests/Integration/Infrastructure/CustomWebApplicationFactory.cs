@@ -1,18 +1,19 @@
-﻿
-using Microsoft.AspNetCore.Mvc.Testing;
+﻿using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Npgsql;
+using ShopBridge.Infra.Persistence;
 
 namespace ShopBridge.Tests.Integration.Infrastructure;
 
 public sealed class CustomWebApplicationFactory
     : WebApplicationFactory<global::Program>
 {
-    private const string DefaultConnectionKey =
-        "ConnectionStrings__DefaultConnection";
+    private const string DefaultConnectionKey = "ConnectionStrings__DefaultConnection";
 
-    private const string LogsConnectionKey =
-        "ConnectionStrings__LogsConnection";
+    private const string LogsConnectionKey = "ConnectionStrings__LogsConnection";
 
     private readonly string? _originalDefaultConnection;
     private readonly string? _originalLogsConnection;
@@ -57,6 +58,20 @@ public sealed class CustomWebApplicationFactory
         Environment.SetEnvironmentVariable(
             LogsConnectionKey,
             logsConnection);
+    }
+
+    protected override IHost CreateHost(IHostBuilder builder)
+    {
+        var host = base.CreateHost(builder);
+
+        using var scope = host.Services.CreateScope();
+
+        var dbContext = scope.ServiceProvider
+            .GetRequiredService<AppDbContext>();
+
+        dbContext.Database.Migrate();
+
+        return host;
     }
 
     private static void ValidateDatabase(

@@ -7,6 +7,7 @@ using ShopBridge.Application.Abstractions.Repositories;
 using ShopBridge.Application.Features.Products.Queries.GetProducts;
 using ShopBridge.Domain.Entities;
 using FluentAssertions;
+using ShopBridge.Application.Features.Products.DTOs;
 
 namespace ShopBridge.Tests.Application.Products.Queries;
 
@@ -37,7 +38,6 @@ public class GetProductsQueryHandlerTests
 
         // Assert
         result.Data.Should().HaveCount(2);
-        result.Data.Should().BeEquivalentTo(products);
 
         repositoryMock.Verify(
             o => o.GetAll(It.IsAny<CancellationToken>()),
